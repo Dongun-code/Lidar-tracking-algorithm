@@ -155,70 +155,22 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr segmentPoint(std::vector<pcl::PointXYZI>& p
     return outPoint;
 }
 
-// void centroidCompute(std::vector<pcl::PointXYZI>& point)
-// {
-
-//     pcl::PointCloud<pcl::PointXYZI>::Ptr outPoint(new pcl::PointCloud<pcl::PointXYZI>);
-//     pcl::PointCloud<pcl::PointXYZI>::Ptr centerPoint(new pcl::PointCloud<pcl::PointXYZI>);
-//     Eigen::Vector4f centroid;
-//     pcl::PointXYZI temp_pt;
-//     for(std::vector<pcl::PointXYZI>::iterator it = point.begin(); it != point.end(); ++ it)
-//     {
-//         it->intensity = (float)1;
-//         outPoint->push_back(*it);
-//     }
-
-//     pcl::compute3DCentroid(*outPoint, centroid);
-//     temp_pt.x = centroid[0], temp_pt.y = centroid[1], temp_pt.z = centroid[2], temp_pt.intensity = (float)3;
-//     // std::cout<<"centroid:"<<centroid<<std::endl;
-//     centerPoint->push_back(temp_pt);
-//     // outPoint.clear();
-//     // centerPoint.clear();
-//     std::cout<<"======================================"<<std::endl;
-// }
-
-// pcl::PointXYZI selectNumber(pcl::PointXYZI cloud)
-// {
-//     pcl::PointCloud<pcl::PointXYZI>::Ptr tempPoint(new pcl::PointCloud<pcl::PointXYZI>);
-//     pcl::PointXYZI outpoint;
-//     Eigen::Vector4f centroid;
-//     tempPoint->push_back(cloud);
-//     pcl::compute3DCentroid(*tempPoint, centroid);
-
-//     std::cout<<"center point:"<<centroid<<std::endl;
-
-//     outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = 5;
-
-//     return outpoint;
-
-// }
-
-pcl::PointXYZI selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud, int j)
-{   
-    std::cout<<"--------------------"<<std::endl;
-    std::cout<<"incloud"<<cloud.size()<<std::endl;
-    // std::cout<<cloud<<std::endl;
-    std::cout<<"--------------------"<<std::endl;
-    pcl::CentroidPoint<pcl::PointXY> centroid;
-
-    for(int i = 0; i<cloud.size(); i++)
-    {
-        std::cout<<i<<std::endl;
-        pcl::PointXY pt2;
-        // std::cout<<cloud.points[i].x<<cloud.points[i].y<<std::endl;
-        pt2.x = cloud.points[i].x, pt2.y = cloud.points[i].x;
-        centroid.add(pt2);
-    }
-
-    pcl::PointXY result;
-    centroid.get(result);
-
-    std::cout<<"centroid point:"<<result<<std::endl;
+pcl::PointXYZI selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud)
+{
+    // pcl::PointCloud<pcl::PointXYZI>::Ptr tempPoint(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointXYZI outpoint;
-    outpoint.x = result.x, outpoint.y = result.y, outpoint.z = 0, outpoint.intensity = j;
+    Eigen::Vector4f centroid;
+    // tempPoint->push_back(cloud);
+    pcl::compute3DCentroid(cloud, centroid);
+
+    std::cout<<"center point:"<<centroid<<std::endl;
+
+    outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = 5;
 
     return outpoint;
+
 }
+
 
 void Callback(const sensor_msgs::PointCloud2& msg)
 {
@@ -286,12 +238,8 @@ void Callback(const sensor_msgs::PointCloud2& msg)
 
         }
         std::cout<<"cloud"<<tempcloud.size()<<std::endl;
-        // selectNumber(pt2);
-        // centroidCloud.push_back()
-        // std::cout<<pt2<<std::endl;
-        // pcl::PointXYZI tempP = selectNumber(centroidCloud, j+1);
-        // std::cout<<"dd:"<<tempP<<std::endl;
-        centroidCloud.push_back(selectNumber(tempcloud, j+1));
+        centroidCloud.push_back(selectNumber(tempcloud));
+        
         j++;
     }
 
@@ -310,8 +258,6 @@ void Callback(const sensor_msgs::PointCloud2& msg)
     center.header.frame_id = "velodyne";
     pub2.publish(center); 
 }
-
-
 
 
 
