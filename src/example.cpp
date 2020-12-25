@@ -49,49 +49,7 @@ public:
     pcl::PointCloud<pcl::PointXYZI>finalCloud; 
     int mode = 0;
 
-    pcl::PointCloud<pcl::PointXYZI>::Ptr point_roi(const pcl::PointCloud<pcl::PointXYZI>::Ptr& point)
-    {
-        pcl::PointCloud<pcl::PointXYZI>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZI>);
-        // pcl_conversions::toPCL(msgs, cloud);
-        pcl::PassThrough<pcl::PointXYZI> pass;
-        // pcl::PassThrough<pcl::PointXYZRGB> pass;
-        pass.setInputCloud(point);    
-        pass.setFilterFieldName("y");
-        pass.setFilterLimits(-10, 10);
-        pass.filter(*point);
-        pass.setInputCloud(point);   
-        pass.setFilterFieldName("z");
-        pass.setFilterLimits(-1.45,0.7);
-        pass.filter(*point);
-        pass.setInputCloud(point);   
-        pass.setFilterFieldName("x");
-        pass.setFilterLimits(-5,1000);
-        pass.filter(*out_cloud);
-
-        return out_cloud;
-    }
-
-    pcl::PointCloud<pcl::PointXYZI>::Ptr point_projection(const pcl::PointCloud<pcl::PointXYZI>::Ptr& point)
-    {
-
-        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZI>);
-        pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
-
-        coefficients->values.resize(4);
-        coefficients->values[0] = coefficients->values[1] = 0;
-        coefficients->values[2] = 1.0;
-        coefficients->values[3] = 0;
-        
-        pcl::ProjectInliers<pcl::PointXYZI> proj;
-        proj.setModelType(pcl::SACMODEL_PLANE);
-        proj.setInputCloud(point);
-        proj.setModelCoefficients(coefficients);
-        proj.filter(*cloud_projected);
-
-        return cloud_projected;    
-    }
-
-    std::pair<pcl::PointXYZI, float> selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud)
+    std::pair<pcl::PointXYZI, float> selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud, float intensity_)
     {
         // pcl::PointCloud<pcl::PointXYZI>::Ptr tempPoint(new pcl::PointCloud<pcl::PointXYZI>);
         pcl::PointXYZI outpoint;
@@ -100,9 +58,9 @@ public:
         // tempPoint->push_back(cloud);
         pcl::compute3DCentroid(cloud, centroid);
 
-        std::cout<<"center point:"<<centroid<<std::endl;
+        // std::cout<<"center point:"<<centroid.size()<<std::endl;
 
-        outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = (float)(1);
+        outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = intensity_;
         if(centroidCloud.size() != 0)
         {
             for(int i = 0; i<= centroidCloud.size(); i++)
@@ -114,18 +72,16 @@ public:
                 double add_z = tempP.z - outpoint.z; 
                 double distance = sqrt(pow(add_x,2)+ pow(add_y, 2) + pow(add_z, 2));
                 std::cout<<"distance:"<<distance<<std::endl;
-                if(distance <= 1.6)
+                if(distance <= 5)
                 {
+                    std::cout<<"Intensity change!"<<centroidCloud.points[i].intensity<<std::endl;
                     intensity = centroidCloud.points[i].intensity;
                 }
 
             }
 
         }
-        
         // pre_value.push_back(outpoint);
-
-
         return {outpoint, intensity};
 
     }
@@ -155,11 +111,12 @@ public:
         pcl::PointCloud<pcl::PointXYZI>::Ptr projection_cloud(new pcl::PointCloud<pcl::PointXYZI>);
         pcl::fromROSMsg(msg, *cloud);
 
-        output_cloud = point_roi(cloud);
-        projection_cloud = point_projection(output_cloud);
+
+
+        output_cloud = util.point_roi(cloud);
+        projection_cloud = util.point_projection(output_cloud);
 
             // std::cout<<"Input: "<<cloud->points.size()<<" ( "<<pcl::getFieldsList(*cloud)<<")"<<std::endl;
-
         //  voxel
         pcl::VoxelGrid<pcl::PointXYZI> sor;
         sor.setInputCloud(projection_cloud);
@@ -188,9 +145,8 @@ public:
 
             // std::cout<< "cluster:"<<cluster_indices[i]<<std::endl;
         }
+
         pcl::PointCloud<pcl::PointXYZI>TotalCloud; 
-
-
         std::vector<pcl::PointCloud<pcl::PointXYZI>> totalvector;
         int j = 0;
 
@@ -212,7 +168,7 @@ public:
 
             std::cout<<"cloud"<<tempcloud.size()<<std::endl;
             // centroidCloud.push_back(selectNumber(tempcloud));
-            std::pair<pcl::PointXYZI, float> result = selectNumber(tempcloud);
+            std::pair<pcl::PointXYZI, float> result = selectNumber(tempcloud, (j+1));
             centroidCloud.push_back(result.first);
             setIntensity(tempcloud,result.second);
             j++;
@@ -238,7 +194,6 @@ public:
 
         mode++;
 
-
         if(mode == 2)
         {
             std::cout<<"clear!!!!"<<std::endl;
@@ -247,7 +202,6 @@ public:
         }
 
     }
-
 
 };
 

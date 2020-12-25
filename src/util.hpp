@@ -27,6 +27,49 @@ public:
         return outPoint;
     }
 
+    pcl::PointCloud<pcl::PointXYZI>::Ptr point_projection(const pcl::PointCloud<pcl::PointXYZI>::Ptr& point)
+    {
+
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZI>);
+        pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+
+        coefficients->values.resize(4);
+        coefficients->values[0] = coefficients->values[1] = 0;
+        coefficients->values[2] = 1.0;
+        coefficients->values[3] = 0;
+        
+        pcl::ProjectInliers<pcl::PointXYZI> proj;
+        proj.setModelType(pcl::SACMODEL_PLANE);
+        proj.setInputCloud(point);
+        proj.setModelCoefficients(coefficients);
+        proj.filter(*cloud_projected);
+
+        return cloud_projected;    
+    }
+
+
+
+    pcl::PointCloud<pcl::PointXYZI>::Ptr point_roi(const pcl::PointCloud<pcl::PointXYZI>::Ptr& point)
+    {
+        pcl::PointCloud<pcl::PointXYZI>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZI>);
+        // pcl_conversions::toPCL(msgs, cloud);
+        pcl::PassThrough<pcl::PointXYZI> pass;
+        // pcl::PassThrough<pcl::PointXYZRGB> pass;
+        pass.setInputCloud(point);    
+        pass.setFilterFieldName("y");
+        pass.setFilterLimits(-10, 10);
+        pass.filter(*point);
+        pass.setInputCloud(point);   
+        pass.setFilterFieldName("z");
+        pass.setFilterLimits(-1.45,0.7);
+        pass.filter(*point);
+        pass.setInputCloud(point);   
+        pass.setFilterFieldName("x");
+        pass.setFilterLimits(-5,1000);
+        pass.filter(*out_cloud);
+
+        return out_cloud;
+    }
 
 
 
