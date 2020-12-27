@@ -57,7 +57,7 @@ public:
         // pcl::PassThrough<pcl::PointXYZRGB> pass;
         pass.setInputCloud(point);    
         pass.setFilterFieldName("y");
-        pass.setFilterLimits(-10, 10);
+        pass.setFilterLimits(-3, 10);
         pass.filter(*point);
         pass.setInputCloud(point);   
         pass.setFilterFieldName("z");

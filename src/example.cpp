@@ -36,6 +36,9 @@
 #include <Eigen/Dense>
 #include "util.hpp"
 #include <cmath>
+#include <typeinfo>
+#include <cstdlib>
+#include <ctime>
 
 ros::Publisher pub, pub2;
 
@@ -47,40 +50,109 @@ public:
 
     pcl::PointCloud<pcl::PointXYZI> centroidCloud; 
     pcl::PointCloud<pcl::PointXYZI>finalCloud; 
+    pcl::PointCloud<pcl::PointXYZI> compareCloud;
+    std::vector<pcl::PointCloud<pcl::PointXYZI>> compareVector;
+    int centroidNum = 0;
+    std::vector<float> colorNumber = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
     int mode = 0;
 
-    std::pair<pcl::PointXYZI, float> selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud, float intensity_)
+    // std::pair<pcl::PointXYZI, float> selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud, float intensity_)
+    // {
+    //     // pcl::PointCloud<pcl::PointXYZI>::Ptr tempPoint(new pcl::PointCloud<pcl::PointXYZI>);
+    //     pcl::PointXYZI outpoint;
+    //     Eigen::Vector4f centroid;
+    //     float intensity = 0;
+    //     // tempPoint->push_back(cloud);
+    //     pcl::compute3DCentroid(cloud, centroid);
+
+    //     // std::cout<<"center point:"<<centroid.size()<<std::endl;
+
+    //     outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = intensity_;
+    //     if(compareCloud.size() != 0)
+    //     {
+    //         for(int i = 0; i<= compareCloud.size(); i++)
+    //         {
+    //             pcl::PointXYZ tempP;
+    //             tempP.x = compareCloud.points[i].x, tempP.y = compareCloud.points[i].y, tempP.z = compareCloud.points[i].z;
+    //             double add_x = tempP.x - outpoint.x;
+    //             double add_y = tempP.y - outpoint.y;
+    //             // double add_z = tempP.z - outpoint.z; 
+    //             // double distance = sqrt(pow(add_x,2)+ pow(add_y, 2) + pow(add_z, 2));
+    //             double distance = sqrt(pow(add_x,2)+ pow(add_y, 2));
+
+    //             // std::cout<<"distance:"<<distance<<std::endl;
+    //             if(distance <= 5)
+    //             {
+    //                 // std::cout<<"Intensity change!"<<centroidCloud.points[i].intensity<<std::endl;
+    //                 intensity = compareCloud.points[i].intensity;
+    //             }
+
+    //         }
+
+    //         deletePrecentroid();
+    //     }
+
+    //     // pre_value.push_back(outpoint);
+    //     return {outpoint, intensity};
+
+    // }
+
+
+    std::pair<pcl::PointXYZI, float> selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud, int intensity_)
     {
+        std::cout<<"--------------------compareVector"<<compareVector.size()<<std::endl;
         // pcl::PointCloud<pcl::PointXYZI>::Ptr tempPoint(new pcl::PointCloud<pcl::PointXYZI>);
         pcl::PointXYZI outpoint;
         Eigen::Vector4f centroid;
-        float intensity = 0;
+        int intensity = 0;
+        float tempSave = 0;
+        std::srand(static_cast<unsigned int>(std::time(0)));
+        int random_num = std::rand() % 50;
+
         // tempPoint->push_back(cloud);
         pcl::compute3DCentroid(cloud, centroid);
 
         // std::cout<<"center point:"<<centroid.size()<<std::endl;
+        outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = random_num;
+        // tempSave = colorNumber.front();
+        // colorNumber.erase(colorNumber.begin());
+        // std::cout<<colorNumber.size()<<std::endl;
 
-        outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = intensity_;
-        if(centroidCloud.size() != 0)
+        if(compareVector.size() != 0)
         {
-            for(int i = 0; i<= centroidCloud.size(); i++)
+            // for( std::vector<pcl::PointCloud<pcl::PointXYZI>>:: iterator pt = compareVector.begin(); pt != compareVector.end(); ++pt)
+            // std::cout<<compareVector.back().size()<<std::endl;
+            for(int i = 0; i<= compareVector.front().points.size(); i++)
             {
+                // std::cout<<point<<std::endl;
+                // std::cout<<compareVector.size()<<std::endl;
+                // std::cout<<"--------------------"<<std::endl;
                 pcl::PointXYZ tempP;
-                tempP.x = centroidCloud.points[i].x, tempP.y = centroidCloud.points[i].y, tempP.z = centroidCloud.points[i].z;
+                tempP.x = compareVector.front().points[i].x, tempP.y = compareVector.front().points[i].y, tempP.z = compareVector.front().points[i].z;
                 double add_x = tempP.x - outpoint.x;
                 double add_y = tempP.y - outpoint.y;
-                double add_z = tempP.z - outpoint.z; 
-                double distance = sqrt(pow(add_x,2)+ pow(add_y, 2) + pow(add_z, 2));
+                // double add_z = tempP.z - outpoint.z; 
+                // double distance = sqrt(pow(add_x,2)+ pow(add_y, 2) + pow(add_z, 2));
+                double distance = sqrt(pow(add_x,2)+ pow(add_y, 2));
                 std::cout<<"distance:"<<distance<<std::endl;
-                if(distance <= 5)
+
+                if(distance <= 1.5)
                 {
-                    std::cout<<"Intensity change!"<<centroidCloud.points[i].intensity<<std::endl;
-                    intensity = centroidCloud.points[i].intensity;
+                    std::cout<<"Intensity change!"<<(int)compareVector.front().points[i].intensity<<std::endl;
+                    intensity = (int)compareVector.front().points[i].intensity;
+                    outpoint.intensity = (int)compareVector.front().points[i].intensity;
+                    // colorNumber.push_back(tempSave);
+
                 }
 
             }
 
+        
+            compareVector.erase(compareVector.begin());
+            // compareVector.clear();
         }
+
+        std::cout<<"--------------------"<<std::endl;
         // pre_value.push_back(outpoint);
         return {outpoint, intensity};
 
@@ -95,6 +167,20 @@ public:
             tempP.x = cloud.points[i].x, tempP.y = cloud.points[i].y, tempP.z = cloud.points[i].z, tempP.intensity = num;
             finalCloud.push_back(tempP);
         }
+
+    }
+
+    void test()
+    {
+        std::cout<<compareVector.size()<<std::endl;
+        for(int i = 0; i < compareVector.size(); i++)
+        {
+            for(int j = 0; j <compareVector[i].points.size(); j++)
+            {
+                std::cout<<"vector size test:"<<compareVector[i].points[j].x<<", "<<compareVector[i].points[j].y<<std::endl;
+            }
+        }
+            // std::cout<<"vector size test:"<<compareVector[i].points.size()<<std::endl;
 
     }
 
@@ -132,7 +218,7 @@ public:
 
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
-        ec.setClusterTolerance(0.5);
+        ec.setClusterTolerance(0.6);
         ec.setMinClusterSize(15);
         ec.setMaxClusterSize(300);
         ec.setSearchMethod(tree);
@@ -140,13 +226,14 @@ public:
         ec.extract(cluster_indices);
 
         // std::cout << "Number of clusters is equal to " << cluster_indices.size () << std::endl;
-        for(int i = 0 ; i< cluster_indices.size(); i++)
-        {
+        // for(int i = 0 ; i< cluster_indices.size(); i++)
+        // {
 
-            // std::cout<< "cluster:"<<cluster_indices[i]<<std::endl;
-        }
+        //     // std::cout<< "cluster:"<<cluster_indices[i]<<std::endl;
+        // }
 
         pcl::PointCloud<pcl::PointXYZI>TotalCloud; 
+        pcl::PointCloud<pcl::PointXYZI> centerPoint; 
         std::vector<pcl::PointCloud<pcl::PointXYZI>> totalvector;
         int j = 0;
 
@@ -161,20 +248,30 @@ public:
                 // std::cout<<"value:"<<pt<<std::endl;
                 // std::cout<<"------------------"<<std::endl;
                 pt2.x = pt.x, pt2.y = pt.y, pt2.z = pt.z;
-                pt2.intensity = (float)(j+1);
+                // pt2.intensity = (float)(j+1);
                 TotalCloud.push_back(pt2);
                 tempcloud.push_back(pt2);
             }
 
-            std::cout<<"cloud"<<tempcloud.size()<<std::endl;
+            // std::cout<<"cloud"<<tempcloud.size()<<std::endl;
             // centroidCloud.push_back(selectNumber(tempcloud));
             std::pair<pcl::PointXYZI, float> result = selectNumber(tempcloud, (j+1));
-            centroidCloud.push_back(result.first);
+            centerPoint.push_back(result.first);
+            std::cout<<"centerpoint:"<<centerPoint.size()<<std::endl;
+            compareVector.push_back(centerPoint);
+            // centroidCloud.push_back(result.first);
+            // compareVector.push_back(centroidCloud);
+
+            // centroidCloud.clear();
             setIntensity(tempcloud,result.second);
             j++;
         }
-
-        std::cout<<"centroidCloud:"<<centroidCloud.size()<<std::endl;
+        // compareVector.push_back(centerPoint);
+        // test();
+        // std::cout<<"compare Vector value"<<compareVector.size()<<std::endl;
+        // std::cout<<"comareVecotr value:"<<compareVector.back().points[0].x<<","<<compareVector.back().points[0].y<<","<<compareVector.back().points[0].z<<std::endl;
+        // std::cout<<"comareVecotr value:"<<compareVector.front().points[0].x<<","<<compareVector.front().points[0].y<<","<<compareVector.front().points[0].z<<std::endl;
+        // std::cout<<"centroidCloud:"<<centroidCloud.size()<<std::endl;
 
         pcl::PCLPointCloud2 cloud_clustered;
         pcl::toPCLPointCloud2(finalCloud, cloud_clustered);
@@ -186,20 +283,20 @@ public:
 
 
         pcl::PCLPointCloud2 center_cloud;
-        pcl::toPCLPointCloud2(centroidCloud, center_cloud);
+        pcl::toPCLPointCloud2(centerPoint, center_cloud);
         sensor_msgs::PointCloud2 center; 
         pcl_conversions::fromPCL(center_cloud, center);
         center.header.frame_id = "velodyne";
         pub2.publish(center); 
 
-        mode++;
+        // mode++;
 
-        if(mode == 2)
-        {
-            std::cout<<"clear!!!!"<<std::endl;
-            centroidCloud.clear();
-            mode = 0;
-        }
+        // if(mode == 2)
+        // {
+        //     std::cout<<"clear!!!!"<<std::endl;
+        //     centroidCloud.clear();
+        //     mode = 0;
+        // }
 
     }
 
@@ -213,9 +310,9 @@ int main(int argc, char** argv)
     frameTracker tracker;
     ros::Subscriber sub = nh.subscribe("/Front_velo/velodyne_points",1, &frameTracker::Callback,&tracker);
 
-    pub = nh.advertise<sensor_msgs::PointCloud2>("tracking",1);
+    pub = nh.advertise<sensor_msgs::PointCloud2>("tracking", 1);
 
-    pub2 = nh.advertise<sensor_msgs::PointCloud2>("center",1);
+    pub2 = nh.advertise<sensor_msgs::PointCloud2>("center", 1);
 
     ros::spin();
 
