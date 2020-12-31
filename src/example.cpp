@@ -48,106 +48,17 @@ class frameTracker
 
 public:
 
-    pcl::PointCloud<pcl::PointXYZI> centroidCloud; 
-    // pcl::PointCloud<pcl::PointXYZI>finalCloud; 
-    pcl::PointCloud<pcl::PointXYZI> compareCloud;
-    std::vector<std::vector<pcl::PointXYZI>> compareVector;
+    // std::vector<std::vector<pcl::PointXYZI>> compareVector;
     pcl::PointCloud<pcl::PointXYZI> outCloud;
-    int centroidNum = 0;
-    std::vector<float> colorNumber = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
-    int mode = 0;
+    lidarUtil util;
 
-    // pcl::PointCloud<pcl::PointXYZI>
-    void selectNumber(std::vector<pcl::PointCloud<pcl::PointXYZI>> vec)
-    {
-
-        std::cout<<"--------------------compareVector"<<compareVector.size()<<std::endl;
-        // pcl::PointCloud<pcl::PointXYZI>::Ptr tempPoint(new pcl::PointCloud<pcl::PointXYZI>);
-        // std:;vector<pcl::PointCloud<pcl::PointXYZI>> tempVector;
-        std::vector<pcl::PointXYZI> tempVector;
-        std::vector<pcl::PointCloud<pcl::PointXYZI>>::iterator cloud;
-        pcl::PointCloud<pcl::PointXYZI> out_cloud;
-        float intensity = 0;
-        
-        // for(cloud = vec.begin(); cloud != vec.end(); cloud++)
-        for(int cl = 0; cl < vec.size(); cl++)
-        {
-            pcl::PointXYZI outpoint;
-            Eigen::Vector4f centroid;
-            std::cout<<"this is test"<<std::endl;
-            float tempSave = 0;
-            float random_num = std::rand() % 15;
-
-            // tempPoint->push_back(cloud);
-            pcl::compute3DCentroid(vec[cl], centroid);
-
-            // std::cout<<"center point:"<<centroid.size()<<std::endl;
-            outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = random_num;
-            // tempSave = colorNumber.front();
-            // colorNumber.erase(colorNumber.begin());
-            // std::cout<<colorNumber.size()<<std::endl;
-
-            if(compareVector.size() != 0)
-            {
-                std::vector<std::vector<pcl::PointXYZI>>::iterator pt;
-                pt = compareVector.begin();
-                // for(pt = compareVec)
-                for(int i = 0; i < pt->size(); i++)
-                {
-
-                    pcl::PointXYZI tempP;
-                    tempP.x = pt->at(i).x, tempP.y = pt->at(i).y, tempP.z = pt->at(i).z;
-                    double add_x = tempP.x - outpoint.x;
-                    double add_y = tempP.y - outpoint.y;
-                    double distance = sqrt(pow(add_x,2)+ pow(add_y, 2));
-
-                    std::cout<<"distance:"<<distance<<std::endl;
-
-                    if(distance <= 1.3)
-                    {
-                        std::cout<<"Intensity change!"<<pt->at(i).intensity<<std::endl;
-                        intensity = pt->at(i).intensity;
-                        outpoint.intensity = intensity;
-
-                    }
-
-                }
-
-            }
-            out_cloud.push_back(outpoint);
-            outCloud.push_back(outpoint);
-            tempVector.push_back(outpoint);
-
-        }
-
-        compareVector.clear();
-        compareVector.push_back(tempVector);
-        std::cout<<"out cloud size"<<out_cloud.size()<<std::endl;
-
-
-        // return out_cloud;
-
-    }
-
-    // void setIntensity(pcl::PointCloud<pcl::PointXYZI> cloud, float num)
-    // {
-
-    //     for(int i = 0; i<= cloud.size(); i++)
-    //     {   
-    //         pcl::PointXYZI tempP;
-    //         tempP.x = cloud.points[i].x, tempP.y = cloud.points[i].y, tempP.z = cloud.points[i].z, tempP.intensity = num;
-    //         finalCloud.push_back(tempP);
-    //     }
-
-    // }
 
 
     void Callback(const sensor_msgs::PointCloud2& msg)
     {
-        lidarUtil util;
-
+  
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
-        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZI>);
+        // pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZI>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new  pcl::PointCloud<pcl::PointXYZ>);
         // pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZI>);
@@ -183,10 +94,8 @@ public:
         ec.extract(cluster_indices);
 
         std::vector<pcl::PointCloud<pcl::PointXYZI>> TotalCloud; 
-        pcl::PointCloud<pcl::PointXYZI> centerPoint; 
         pcl::PointCloud<pcl::PointXYZI> final_cloud; 
-        std::vector<pcl::PointCloud<pcl::PointXYZI>> totalvector;
-        int j = 0;
+
 
         for( std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
         {
@@ -196,8 +105,7 @@ public:
             {
                 pcl::PointXYZI pt = projection_cloud->points[*pit];
                 pcl::PointXYZI pt2;
-                // std::cout<<"value:"<<pt<<std::endl;
-                // std::cout<<"------------------"<<std::endl;
+
                 pt2.x = pt.x, pt2.y = pt.y, pt2.z = pt.z;
                 // pt2.intensity = (float)(j+1);
 
@@ -210,24 +118,25 @@ public:
 
         }
 
-        // std::pair<pcl::PointCloud<pcl::PointXYZI>, float> result = selectNumber(TotalCloud);
-        selectNumber(TotalCloud);
+        util.selectNumber(TotalCloud);
+
 
         pcl::PCLPointCloud2 cloud_clustered;
         pcl::toPCLPointCloud2(final_cloud, cloud_clustered);
         sensor_msgs::PointCloud2 output_clustered; 
         pcl_conversions::fromPCL(cloud_clustered, output_clustered);
         output_clustered.header.frame_id = "velodyne";
-        pub.publish(output_clustered); 
+        pub.publish(output_clustered);
+        final_cloud.clear();
 
 
         pcl::PCLPointCloud2 center_cloud;
-        pcl::toPCLPointCloud2(outCloud, center_cloud);
+        pcl::toPCLPointCloud2(util.outCloud, center_cloud);
         sensor_msgs::PointCloud2 center; 
         pcl_conversions::fromPCL(center_cloud, center);
         center.header.frame_id = "velodyne";
         pub2.publish(center); 
-        outCloud.clear();
+        util.outCloud.clear();
 
     }
 

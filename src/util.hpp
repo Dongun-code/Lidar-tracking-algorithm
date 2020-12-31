@@ -11,6 +11,8 @@ private:
 
 
 public:
+    std::vector<std::vector<pcl::PointXYZI>> compareVector;
+    pcl::PointCloud<pcl::PointXYZI> outCloud;
     lidarUtil() {};
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr segmentPoint(std::vector<pcl::PointXYZI>& point)
@@ -90,6 +92,69 @@ public:
         std::cout<<"pre_value:"<<pre_value.front()<<std::endl;
 
         return outpoint;
+
+    }
+
+    void selectNumber(std::vector<pcl::PointCloud<pcl::PointXYZI>> vec)
+    {
+
+        std::cout<<"--------------------compareVector"<<compareVector.size()<<std::endl;
+        std::vector<pcl::PointXYZI> tempVector;
+        std::vector<pcl::PointCloud<pcl::PointXYZI>>::iterator cloud;
+        pcl::PointCloud<pcl::PointXYZI> out_cloud;
+        std::vector<float> intensityVector;
+
+
+        for(int cl = 0; cl < vec.size(); cl++)
+        {
+            pcl::PointXYZI outpoint;
+            Eigen::Vector4f centroid;
+            std::cout<<"this is test"<<std::endl;
+            float tempSave = 0;
+            float intensity = std::rand() % 15;
+
+            pcl::compute3DCentroid(vec[cl], centroid);
+
+
+            outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = intensity;
+
+            if(compareVector.size() != 0)
+            {
+                std::vector<std::vector<pcl::PointXYZI>>::iterator pt;
+                pt = compareVector.begin();
+
+                for(int i = 0; i < pt->size(); i++)
+                {
+
+                    pcl::PointXYZI tempP;
+                    tempP.x = pt->at(i).x, tempP.y = pt->at(i).y, tempP.z = pt->at(i).z;
+                    double add_x = tempP.x - outpoint.x;
+                    double add_y = tempP.y - outpoint.y;
+                    double distance = sqrt(pow(add_x,2)+ pow(add_y, 2));
+
+                    std::cout<<"distance:"<<distance<<std::endl;
+
+                    if(distance <= 1.3)
+                    {
+                        std::cout<<"Intensity change!"<<pt->at(i).intensity<<std::endl;
+                        intensity = pt->at(i).intensity;
+                        outpoint.intensity = intensity;
+
+                    }
+
+                }
+
+
+                // intensityVector.push_back(intensity);
+            }
+            out_cloud.push_back(outpoint);
+            outCloud.push_back(outpoint);
+            tempVector.push_back(outpoint);
+
+        }
+        // setIntensity(vec, intensityVector);
+        compareVector.clear();
+        compareVector.push_back(tempVector);
 
     }
 
