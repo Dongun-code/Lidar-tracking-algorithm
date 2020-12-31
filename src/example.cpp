@@ -69,16 +69,17 @@ public:
         pcl::PointCloud<pcl::PointXYZI> out_cloud;
         float intensity = 0;
         
-        for(cloud = vec.begin(); cloud != vec.end(); cloud++)
+        // for(cloud = vec.begin(); cloud != vec.end(); cloud++)
+        for(int cl = 0; cl < vec.size(); cl++)
         {
             pcl::PointXYZI outpoint;
             Eigen::Vector4f centroid;
             std::cout<<"this is test"<<std::endl;
             float tempSave = 0;
-            int random_num = std::rand() % 15;
+            float random_num = std::rand() % 15;
 
             // tempPoint->push_back(cloud);
-            pcl::compute3DCentroid(vec[0], centroid);
+            pcl::compute3DCentroid(vec[cl], centroid);
 
             // std::cout<<"center point:"<<centroid.size()<<std::endl;
             outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = random_num;
@@ -100,9 +101,9 @@ public:
                     double add_y = tempP.y - outpoint.y;
                     double distance = sqrt(pow(add_x,2)+ pow(add_y, 2));
 
-                    // std::cout<<"distance:"<<distance<<std::endl;
+                    std::cout<<"distance:"<<distance<<std::endl;
 
-                    if(distance <= 1.5)
+                    if(distance <= 1.3)
                     {
                         std::cout<<"Intensity change!"<<pt->at(i).intensity<<std::endl;
                         intensity = pt->at(i).intensity;
@@ -227,15 +228,6 @@ public:
         center.header.frame_id = "velodyne";
         pub2.publish(center); 
         outCloud.clear();
-
-        // mode++;
-
-        // if(mode == 2)
-        // {
-        //     std::cout<<"clear!!!!"<<std::endl;
-        //     centroidCloud.clear();
-        //     mode = 0;
-        // }
 
     }
 
