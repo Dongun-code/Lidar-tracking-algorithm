@@ -3,6 +3,29 @@
 
 #include <iostream>
 #include <pcl/point_types.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/common/common.h>
+#include <pcl/common/centroid.h>
+#include <pcl/common/transforms.h>
+#include <pcl/console/parse.h>
+#include <pcl/io/pcd_io.h>
+#include <boost/format.hpp>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/sample_consensus/ransac.h>
+#include <pcl/console/time.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/segmentation/extract_clusters.h>
 
 class lidarUtil
 {
@@ -75,27 +98,27 @@ public:
 
 
 
-    pcl::PointXYZI selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud, int mode)
-    {
-        // pcl::PointCloud<pcl::PointXYZI>::Ptr tempPoint(new pcl::PointCloud<pcl::PointXYZI>);
-        pcl::PointXYZI outpoint;
-        Eigen::Vector4f centroid;
-        // tempPoint->push_back(cloud);
-        pcl::compute3DCentroid(cloud, centroid);
+    // pcl::PointXYZI selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud, int mode)
+    // {
+    //     // pcl::PointCloud<pcl::PointXYZI>::Ptr tempPoint(new pcl::PointCloud<pcl::PointXYZI>);
+    //     pcl::PointXYZI outpoint;
+    //     Eigen::Vector4f centroid;
+    //     // tempPoint->push_back(cloud);
+    //     pcl::compute3DCentroid(cloud, centroid);
 
-        std::cout<<"center point:"<<centroid<<std::endl;
+    //     std::cout<<"center point:"<<centroid<<std::endl;
 
-        outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = 5;
-        pre_value.push_back(outpoint);
-        std::cout<<"pre_value:"<<pre_value.size()<<std::endl;
-        std::cout<<"pre_value:"<<pre_value.back()<<std::endl;
-        std::cout<<"pre_value:"<<pre_value.front()<<std::endl;
+    //     outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = 5;
+    //     pre_value.push_back(outpoint);
+    //     std::cout<<"pre_value:"<<pre_value.size()<<std::endl;
+    //     std::cout<<"pre_value:"<<pre_value.back()<<std::endl;
+    //     std::cout<<"pre_value:"<<pre_value.front()<<std::endl;
 
-        return outpoint;
+    //     return outpoint;
 
-    }
+    // }
 
-    void selectNumber(std::vector<pcl::PointCloud<pcl::PointXYZI>> vec)
+    void selectNumber(std::vector<pcl::PointCloud<pcl::PointXYZI>> vec, double thresold)
     {
 
         std::cout<<"--------------------compareVector"<<compareVector.size()<<std::endl;
@@ -134,7 +157,7 @@ public:
 
                     std::cout<<"distance:"<<distance<<std::endl;
 
-                    if(distance <= 1.3)
+                    if(distance <= thresold)
                     {
                         std::cout<<"Intensity change!"<<pt->at(i).intensity<<std::endl;
                         intensity = pt->at(i).intensity;

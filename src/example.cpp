@@ -3,44 +3,15 @@
 #include <pcl/filters/project_inliers.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/ModelCoefficients.h>
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/common/common.h>
-#include <pcl/common/centroid.h>
-#include <pcl/common/transforms.h>
-#include <pcl/console/parse.h>
-#include <set>
-#include <pcl/io/pcd_io.h>
-#include <boost/format.hpp>
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/sample_consensus/ransac.h>
-#include <pcl/console/time.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/kdtree/kdtree.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/segmentation/extract_clusters.h>
-#include <sensor_msgs/PointCloud2.h>
 #include <Eigen/Dense>
 #include "util.hpp"
-#include <cmath>
-#include <typeinfo>
-#include <cstdlib>
-#include <ctime>
 
 ros::Publisher pub, pub2;
+
+double cluster_value, centroid_distance, leaf_size;
 
 
 class frameTracker
@@ -56,25 +27,28 @@ public:
 
     void Callback(const sensor_msgs::PointCloud2& msg)
     {
-  
+
+        //set variable and convert ros msg
+
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
-        // pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZI>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new  pcl::PointCloud<pcl::PointXYZ>);
-        // pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZI>);
         pcl::PointCloud<pcl::PointXYZI>::Ptr projection_cloud(new pcl::PointCloud<pcl::PointXYZI>);
         pcl::fromROSMsg(msg, *cloud);
 
 
+        //Point roi & Point projection
 
         output_cloud = util.point_roi(cloud);
         projection_cloud = util.point_projection(output_cloud);
 
             // std::cout<<"Input: "<<cloud->points.size()<<" ( "<<pcl::getFieldsList(*cloud)<<")"<<std::endl;
         //  voxel
+        
         pcl::VoxelGrid<pcl::PointXYZI> sor;
         sor.setInputCloud(projection_cloud);
         sor.setLeafSize(0.3f,0.3f,0.3f);
+        sor.setLeafSize(leaf_size,leaf_size,leaf_size);
         sor.filter(*projection_cloud);
 
         // std::cout << "Output : " << cloud_filtered->points.size () << " (" << pcl::getFieldsList (*cloud_filtered) <<")"<< std::endl;
@@ -86,7 +60,7 @@ public:
 
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
-        ec.setClusterTolerance(0.6);
+        ec.setClusterTolerance(cluster_value);
         ec.setMinClusterSize(15);
         ec.setMaxClusterSize(300);
         ec.setSearchMethod(tree);
@@ -118,7 +92,7 @@ public:
 
         }
 
-        util.selectNumber(TotalCloud);
+        util.selectNumber(TotalCloud, centroid_distance);
 
 
         pcl::PCLPointCloud2 cloud_clustered;
@@ -147,8 +121,12 @@ int main(int argc, char** argv)
     ros::init(argc, argv,"tracking_frame");
     ros::NodeHandle nh;
 
+    nh.getParam("cluster_value_",cluster_value);
+    nh.getParam("centroid_distance_",centroid_distance);
+    nh.getParam("voxel_leaf_size_", leaf_size);
+
     frameTracker tracker;
-    ros::Subscriber sub = nh.subscribe("/Front_velo/velodyne_points",1, &frameTracker::Callback,&tracker);
+    ros::Subscriber sub = nh.subscribe("/Front_velo/velodyne_points",1, &frameTracker::Callback, &tracker);
 
     pub = nh.advertise<sensor_msgs::PointCloud2>("tracking", 1);
 
