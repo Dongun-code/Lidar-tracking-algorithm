@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/milab/catkin_ws/src/frame_tracking/build/devel/setup.sh

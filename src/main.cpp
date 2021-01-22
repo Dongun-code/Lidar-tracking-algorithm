@@ -8,10 +8,14 @@
 #include <vector>
 #include <Eigen/Dense>
 #include "util.hpp"
+// #include "kalman_hand.hpp"
 
-ros::Publisher pub, pub2;
+ros::Publisher pub, pub2, pub3;
 
-double cluster_value, centroid_distance, leaf_size;
+// double cluster_value, centroid_distance, leaf_size;
+double cluster_value = 0.5;
+double centroid_distance = 1.6;
+double leaf_size = 0.3;
 
 
 class frameTracker
@@ -112,9 +116,18 @@ public:
         pub2.publish(center); 
         util.outCloud.clear();
 
+        pcl::PCLPointCloud2 kalman_predict;
+        pcl::toPCLPointCloud2(util.outKalman, kalman_predict);
+        sensor_msgs::PointCloud2 kalman_center; 
+        pcl_conversions::fromPCL(kalman_predict, kalman_center);
+        kalman_center.header.frame_id = "velodyne";
+        pub3.publish(kalman_center); 
+        util.outKalman.clear();
+
     }
 
 };
+
 
 int main(int argc, char** argv)
 {
@@ -131,6 +144,8 @@ int main(int argc, char** argv)
     pub = nh.advertise<sensor_msgs::PointCloud2>("tracking", 1);
 
     pub2 = nh.advertise<sensor_msgs::PointCloud2>("center", 1);
+
+    pub3 = nh.advertise<sensor_msgs::PointCloud2>("Kalman_predict", 1);
 
     ros::spin();
 

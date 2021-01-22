@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
 )
 
+find_package(OpenCV REQUIRED PATHS $ENV{HOME}/lib/deploy/opencv/lib/cmake NO_DEFAULT_PATH)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -119,7 +121,7 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
 )
-
+include_directories(${OpenCV_INCLUDE_DIRS})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/frame_tracking.cpp
@@ -133,7 +135,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/example.cpp)
+add_executable(${PROJECT_NAME}_node src/main.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -148,6 +150,7 @@ add_executable(${PROJECT_NAME}_node src/example.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
+   ${OpenCV_LIBS}
  )
 
 #############

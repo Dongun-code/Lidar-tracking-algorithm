@@ -1,5 +1,5 @@
-#ifndef ADD_H
-#define ADD_H
+#ifndef UTIL_HPP
+#define UTIL_HPP
 
 #include <iostream>
 #include <pcl/point_types.h>
@@ -26,6 +26,64 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/video/video.hpp>
+// #include "kalman_hand.hpp"
+
+class KalmanFilter_hand {
+
+public:
+
+    std::vector<pcl::PointXYZI> preMean;
+    float T = 0.1;
+
+    KalmanFilter_hand() { }
+
+    ~KalmanFilter_hand() { }
+
+
+    pcl::PointXYZI predict(const pcl::PointXYZI& pre_state, const pcl::PointXYZI& cur_state) {
+
+        cv::KalmanFilter KFT( 4,2,0);
+        pcl::PointXYZI outpoint;
+        // cv::KalmanFilter KF( 4,2,0);
+        KFT.transitionMatrix = (cv::Mat_<float>(4,4) << 1,0 , T, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            0, 0, 0, 1);
+        // preMean = centroid;
+        KFT.measurementMatrix = cv::Mat::zeros(2, 4, CV_32F);
+        KFT.measurementMatrix.at<float>(0) = 1.0f;
+        KFT.measurementMatrix.at<float>(5) = 1.0f;        
+
+        cv::setIdentity(KFT.processNoiseCov, cv::Scalar::all(1e-4));
+        cv::setIdentity(KFT.measurementNoiseCov, cv::Scalar::all(1e-1));
+        cv::setIdentity(KFT.errorCovPost, cv::Scalar::all(5));
+
+        KFT.statePre.at<float>(0) = pre_state.x;
+        KFT.statePre.at<float>(1) = pre_state.y;
+        KFT.statePre.at<float>(2) = 0;
+        KFT.statePre.at<float>(3) = 0;
+
+        // cv::Mat_<float> measure(4,1); 
+        cv::Mat measure(2, 1, CV_32F);
+        measure.at<float>(0) = cur_state.x;
+        measure.at<float>(1) = cur_state.y;
+        // measure << cur_state.x, cur_state.y;
+        // std::cout<<"check measure"<< measure<<std::endl;
+        KFT.predict();
+        auto estimated = KFT.correct(measure);
+        std::cout<<estimated<<std::endl;
+        outpoint.x = estimated.at<float>(0) , outpoint.y = estimated.at<float>(1), outpoint.z = 0;
+
+        return outpoint;
+
+    }
+
+};
+
+
 
 class lidarUtil
 {
@@ -33,9 +91,12 @@ private:
     std::vector<pcl::PointXYZI> pre_value;
 
 
+
 public:
     std::vector<std::vector<pcl::PointXYZI>> compareVector;
+    std::vector<std::vector<pcl::PointXYZI>> kalmanVector;
     pcl::PointCloud<pcl::PointXYZI> outCloud;
+    pcl::PointCloud<pcl::PointXYZI> outKalman;
     lidarUtil() {};
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr segmentPoint(std::vector<pcl::PointXYZI>& point)
@@ -120,9 +181,11 @@ public:
 
     void selectNumber(std::vector<pcl::PointCloud<pcl::PointXYZI>> vec, double thresold)
     {
-
-        std::cout<<"--------------------compareVector"<<compareVector.size()<<std::endl;
+        
+        KalmanFilter_hand KF;
+        // std::cout<<"--------------------compareVector"<<compareVector.size()<<std::endl;
         std::vector<pcl::PointXYZI> tempVector;
+        std::vector<pcl::PointXYZI> tempKalman;
         std::vector<pcl::PointCloud<pcl::PointXYZI>>::iterator cloud;
         pcl::PointCloud<pcl::PointXYZI> out_cloud;
         std::vector<float> intensityVector;
@@ -130,14 +193,15 @@ public:
 
         for(int cl = 0; cl < vec.size(); cl++)
         {
+
+
             pcl::PointXYZI outpoint;
+            pcl::PointXYZI kalmanPoint;
             Eigen::Vector4f centroid;
-            std::cout<<"this is test"<<std::endl;
             float tempSave = 0;
             float intensity = std::rand() % 15;
 
             pcl::compute3DCentroid(vec[cl], centroid);
-
 
             outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = intensity;
 
@@ -159,25 +223,39 @@ public:
 
                     if(distance <= thresold)
                     {
+                        kalmanPoint = KF.predict(tempP, outpoint);
                         std::cout<<"Intensity change!"<<pt->at(i).intensity<<std::endl;
                         intensity = pt->at(i).intensity;
                         outpoint.intensity = intensity;
+                        kalmanPoint.intensity = intensity;
+                        std::cout<<"kalman : "<<kalmanPoint<<std::endl;
+                    }
 
+                    if(distance <= thresold)
+                    {
+                        kalmanPoint = KF.predict(tempP, outpoint);
+                        std::cout<<"Intensity change!"<<pt->at(i).intensity<<std::endl;
+                        intensity = pt->at(i).intensity;
+                        outpoint.intensity = intensity;
+                        kalmanPoint.intensity = intensity;
+                        std::cout<<"kalman : "<<kalmanPoint<<std::endl;
                     }
 
                 }
-
-
                 // intensityVector.push_back(intensity);
             }
             out_cloud.push_back(outpoint);
             outCloud.push_back(outpoint);
+            outKalman.push_back(kalmanPoint);
             tempVector.push_back(outpoint);
+            tempKalman.push_back(kalmanPoint);
 
         }
         // setIntensity(vec, intensityVector);
         compareVector.clear();
+        kalmanVector.clear();
         compareVector.push_back(tempVector);
+        kalmanVector.push_back(tempKalman);
 
     }
 
