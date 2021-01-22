@@ -196,6 +196,7 @@ public:
 
 
             pcl::PointXYZI outpoint;
+            pcl::PointXYZI new_outpoint;
             pcl::PointXYZI kalmanPoint;
             Eigen::Vector4f centroid;
             float tempSave = 0;
@@ -223,22 +224,14 @@ public:
 
                     if(distance <= thresold)
                     {
-                        kalmanPoint = KF.predict(tempP, outpoint);
+                        new_outpoint = KF.predict(tempP, outpoint);
+                        outpoint.x = new_outpoint.x, outpoint.y = new_outpoint.y, new_outpoint.z = 0;
                         std::cout<<"Intensity change!"<<pt->at(i).intensity<<std::endl;
                         intensity = pt->at(i).intensity;
                         outpoint.intensity = intensity;
-                        kalmanPoint.intensity = intensity;
-                        std::cout<<"kalman : "<<kalmanPoint<<std::endl;
-                    }
-
-                    if(distance <= thresold)
-                    {
-                        kalmanPoint = KF.predict(tempP, outpoint);
-                        std::cout<<"Intensity change!"<<pt->at(i).intensity<<std::endl;
-                        intensity = pt->at(i).intensity;
-                        outpoint.intensity = intensity;
-                        kalmanPoint.intensity = intensity;
-                        std::cout<<"kalman : "<<kalmanPoint<<std::endl;
+                        outKalman.push_back(new_outpoint);
+                        // kalmanPoint.intensity = intensity;
+                        // std::cout<<"kalman : "<<kalmanPoint<<std::endl;
                     }
 
                 }
@@ -246,16 +239,16 @@ public:
             }
             out_cloud.push_back(outpoint);
             outCloud.push_back(outpoint);
-            outKalman.push_back(kalmanPoint);
+            // outKalman.push_back(kalmanPoint);
             tempVector.push_back(outpoint);
-            tempKalman.push_back(kalmanPoint);
+            // tempKalman.push_back(kalmanPoint);
 
         }
         // setIntensity(vec, intensityVector);
         compareVector.clear();
-        kalmanVector.clear();
+        // kalmanVector.clear();
         compareVector.push_back(tempVector);
-        kalmanVector.push_back(tempKalman);
+        // kalmanVector.push_back(tempKalman);
 
     }
 
