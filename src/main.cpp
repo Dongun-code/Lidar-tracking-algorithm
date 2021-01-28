@@ -3,6 +3,7 @@
 #include <pcl/filters/project_inliers.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <visualization_msgs/Marker.h>
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -10,7 +11,7 @@
 #include "util.hpp"
 // #include "kalman_hand.hpp"
 
-ros::Publisher pub, pub2, pub3;
+ros::Publisher pub, pub2, pub3, pub_vis, pub_test;
 
 // double cluster_value, centroid_distance, leaf_size;
 double cluster_value = 0.5;
@@ -26,6 +27,19 @@ public:
     // std::vector<std::vector<pcl::PointXYZI>> compareVector;
     pcl::PointCloud<pcl::PointXYZI> outCloud;
     lidarUtil util;
+
+    void drawMarker(pcl::PointCloud<pcl::PointXYZI>& cloud , pcl::PointXYZI& centroid, int id) {
+
+        Eigen::Vector4f center;
+        Eigen::Vector4f min;
+        Eigen::Vector4f max;
+
+        center << centroid.x, centroid.y, 0, 0;        
+        pcl::getMinMax3D(cloud, min, max);
+        // std::cout<<"min"<<min<<"Max:"<<max<<std::endl;
+        pub_vis.publish(util.mark_centroid(pcl_conversions::fromPCL(cloud.header), center, min, max, "velodyne", id, 0, 255, 0));
+        
+    }
 
 
 
@@ -74,7 +88,6 @@ public:
         std::vector<pcl::PointCloud<pcl::PointXYZI>> TotalCloud; 
         pcl::PointCloud<pcl::PointXYZI> final_cloud; 
 
-
         for( std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
         {
             pcl::PointCloud<pcl::PointXYZI> tempcloud; 
@@ -96,11 +109,13 @@ public:
 
         }
 
-        util.selectNumber(TotalCloud, centroid_distance);
+        std::vector<float> intensityVector;
+        intensityVector = util.selectNumber(TotalCloud, centroid_distance);
+
 
 
         pcl::PCLPointCloud2 cloud_clustered;
-        pcl::toPCLPointCloud2(final_cloud, cloud_clustered);
+        pcl::toPCLPointCloud2(util.paintColor(TotalCloud, intensityVector), cloud_clustered);
         sensor_msgs::PointCloud2 output_clustered; 
         pcl_conversions::fromPCL(cloud_clustered, output_clustered);
         output_clustered.header.frame_id = "velodyne";
@@ -122,7 +137,28 @@ public:
         pcl_conversions::fromPCL(kalman_predict, kalman_center);
         kalman_center.header.frame_id = "velodyne";
         pub3.publish(kalman_center); 
+
+
+        pcl::PointCloud<pcl::PointXYZI> minmax_test;
+        for (int i =0 ; i <util.outKalman.size(); i++) {
+            
+            pcl::PointXYZ minp;
+            pcl::PointXYZ maxp;
+
+            drawMarker(util.outMinMax.at(i), util.outKalman.at(i), i);
+            // pcl::getMinMax3D(cloud, minp, maxp);
+            // minmax_test.push_back(minp)
+            // minmax_test.push_back(maxp)
+        }
         util.outKalman.clear();
+        // pcl::PCLPointCloud2 test;
+        // pcl::toPCLPointCloud2(minmax_test, test);
+        // sensor_msgs::PointCloud2 test_minmax; 
+        // pcl_conversions::fromPCL(test, test_minmax);
+        // test_minmax.header.frame_id = "velodyne";
+        // pub_test.publish(center); 
+        // minmax_test.clear();
+        // util.outKalman.clear();
 
     }
 
@@ -146,6 +182,11 @@ int main(int argc, char** argv)
     pub2 = nh.advertise<sensor_msgs::PointCloud2>("center", 1);
 
     pub3 = nh.advertise<sensor_msgs::PointCloud2>("Kalman_predict", 1);
+
+    pub_vis = nh.advertise<visualization_msgs::Marker> ("visualization_marker", 1);
+
+    // pub_test = nh.advertise<sensor_msgs::PointCloud2>("test", 1);
+
 
     ros::spin();
 
