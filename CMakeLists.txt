@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   roscpp
   sensor_msgs
+  std_msgs
+  message_generation
 )
 
 find_package(OpenCV REQUIRED PATHS $ENV{HOME}/lib/deploy/opencv/lib/cmake NO_DEFAULT_PATH)
@@ -49,11 +51,11 @@ find_package(OpenCV REQUIRED PATHS $ENV{HOME}/lib/deploy/opencv/lib/cmake NO_DEF
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  pointInformation.msg
+  pointInformationarray.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -70,10 +72,13 @@ find_package(OpenCV REQUIRED PATHS $ENV{HOME}/lib/deploy/opencv/lib/cmake NO_DEF
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   sensor_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+  sensor_msgs
+  std_msgs
+  frame_tracking
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -108,6 +113,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES frame_tracking
 #  CATKIN_DEPENDS pcl_ros roscpp sensor_msgs
+  CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 

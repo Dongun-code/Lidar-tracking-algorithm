@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/milab/catkin_ws/src/frame_tracking/src/example.cpp" "/home/milab/catkin_ws/src/frame_tracking/build/CMakeFiles/frame_tracking_node.dir/src/example.cpp.o"
+  "/home/milab/catkin_ws/src/frame_tracking/src/main.cpp" "/home/milab/catkin_ws/src/frame_tracking/build/CMakeFiles/frame_tracking_node.dir/src/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -35,6 +35,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/usr/include/tcl"
   "/usr/include/ni"
   "/usr/include/openni2"
+  "/home/milab/lib/deploy/opencv/include/opencv4"
   )
 
 # Targets to which this target links.

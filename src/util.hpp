@@ -99,6 +99,7 @@ public:
     std::vector<pcl::PointCloud<pcl::PointXYZI>> outMinMax;
     pcl::PointCloud<pcl::PointXYZI> outCloud;
     pcl::PointCloud<pcl::PointXYZI> outKalman;
+    std::vector<double> distanceVector;
 
     lidarUtil() {};
 
@@ -146,15 +147,15 @@ public:
         // pcl::PassThrough<pcl::PointXYZRGB> pass;
         pass.setInputCloud(point);    
         pass.setFilterFieldName("y");
-        pass.setFilterLimits(-3, 10);
+        pass.setFilterLimits(-15, 15);
         pass.filter(*point);
         pass.setInputCloud(point);   
         pass.setFilterFieldName("z");
-        pass.setFilterLimits(-1.45,0.7);
+        pass.setFilterLimits(-0.2,1.5);
         pass.filter(*point);
         pass.setInputCloud(point);   
         pass.setFilterFieldName("x");
-        pass.setFilterLimits(-5,1000);
+        pass.setFilterLimits(-100,100);
         pass.filter(*out_cloud);
 
         return out_cloud;
@@ -182,9 +183,9 @@ public:
 
     // }
 
-    visualization_msgs::Marker mark_centroid(std_msgs::Header header, Eigen::Vector4f centroid, Eigen::Vector4f min, Eigen::Vector4f max, std::string ns ,int id, float r, float g, float b)
+    visualization_msgs::Marker mark_centroid(std_msgs::Header header, Eigen::Vector4f centroid, Eigen::Vector4f min, Eigen::Vector4f max, std::string ns , double distance_, int id, float r, float g, float b)
     {
-        uint32_t shape = visualization_msgs::Marker::CUBE;
+        uint32_t shape = visualization_msgs::Marker::TEXT_VIEW_FACING;
         visualization_msgs::Marker marker;
         marker.header.frame_id = "velodyne";
         marker.header.stamp = ros::Time();
@@ -201,7 +202,10 @@ public:
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
         marker.pose.orientation.w = 1.0;
-        
+
+        // std::string distance_text = "";
+
+        marker.text = "distance";
         marker.scale.x = (max[0]-min[0]);
         marker.scale.y = (max[1]-min[1]);
         marker.scale.z = (max[2]-min[2]);
@@ -249,6 +253,7 @@ public:
             pcl::PointXYZI outpoint;
             pcl::PointXYZI new_outpoint;
             pcl::PointXYZI kalmanPoint;
+            pcl::PointXYZI total_point;
             Eigen::Vector4f centroid;
             float tempSave = 0;
             float intensity = std::rand() % 15;
@@ -257,7 +262,8 @@ public:
             
 
             outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = intensity;
-
+            total_point.x = centroid[0], total_point.y = centroid[1], total_point.z = centroid[2], total_point.intensity = intensity;
+            
             if(compareVector.size() != 0)
             {
                 std::vector<std::vector<pcl::PointXYZI>>::iterator pt;
@@ -329,6 +335,16 @@ public:
         return clusterCloud;
     }
 
+    float extractDistance() {
+
+        for( auto point : outKalman) {
+
+            double distance = pow(point.x, 2) + pow(point.y, 2) + pow(point.z, 2);
+            distance = sqrt(distance);
+
+            distanceVector.push_back(distance);
+        }
+    }
 
 };
 

@@ -1,5 +1,5 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/frame_tracking_node.dir/src/example.cpp.o"
+  "CMakeFiles/frame_tracking_node.dir/src/main.cpp.o"
   "devel/lib/frame_tracking/frame_tracking_node.pdb"
   "devel/lib/frame_tracking/frame_tracking_node"
 )

@@ -1324,32 +1324,32 @@ gtest/fast:
 	$(MAKE) -f gtest/googlemock/gtest/CMakeFiles/gtest.dir/build.make gtest/googlemock/gtest/CMakeFiles/gtest.dir/build
 .PHONY : gtest/fast
 
-src/example.o: src/example.cpp.o
+src/main.o: src/main.cpp.o
 
-.PHONY : src/example.o
+.PHONY : src/main.o
 
 # target to build an object file
-src/example.cpp.o:
-	$(MAKE) -f CMakeFiles/frame_tracking_node.dir/build.make CMakeFiles/frame_tracking_node.dir/src/example.cpp.o
-.PHONY : src/example.cpp.o
+src/main.cpp.o:
+	$(MAKE) -f CMakeFiles/frame_tracking_node.dir/build.make CMakeFiles/frame_tracking_node.dir/src/main.cpp.o
+.PHONY : src/main.cpp.o
 
-src/example.i: src/example.cpp.i
+src/main.i: src/main.cpp.i
 
-.PHONY : src/example.i
+.PHONY : src/main.i
 
 # target to preprocess a source file
-src/example.cpp.i:
-	$(MAKE) -f CMakeFiles/frame_tracking_node.dir/build.make CMakeFiles/frame_tracking_node.dir/src/example.cpp.i
-.PHONY : src/example.cpp.i
+src/main.cpp.i:
+	$(MAKE) -f CMakeFiles/frame_tracking_node.dir/build.make CMakeFiles/frame_tracking_node.dir/src/main.cpp.i
+.PHONY : src/main.cpp.i
 
-src/example.s: src/example.cpp.s
+src/main.s: src/main.cpp.s
 
-.PHONY : src/example.s
+.PHONY : src/main.s
 
 # target to generate assembly for a file
-src/example.cpp.s:
-	$(MAKE) -f CMakeFiles/frame_tracking_node.dir/build.make CMakeFiles/frame_tracking_node.dir/src/example.cpp.s
-.PHONY : src/example.cpp.s
+src/main.cpp.s:
+	$(MAKE) -f CMakeFiles/frame_tracking_node.dir/build.make CMakeFiles/frame_tracking_node.dir/src/main.cpp.s
+.PHONY : src/main.cpp.s
 
 # Help Target
 help:
@@ -1453,9 +1453,9 @@ help:
 	@echo "... gmock"
 	@echo "... gtest_main"
 	@echo "... gtest"
-	@echo "... src/example.o"
-	@echo "... src/example.i"
-	@echo "... src/example.s"
+	@echo "... src/main.o"
+	@echo "... src/main.i"
+	@echo "... src/main.s"
 .PHONY : help
 
 

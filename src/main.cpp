@@ -9,9 +9,11 @@
 #include <vector>
 #include <Eigen/Dense>
 #include "util.hpp"
+#include "frame_tracking/pointInformation.h"
+#include "frame_tracking/pointInformationarray.h"
 // #include "kalman_hand.hpp"
 
-ros::Publisher pub, pub2, pub3, pub_vis, pub_test;
+ros::Publisher pub, pub2, pub3, pub_vis, pub_information;
 
 // double cluster_value, centroid_distance, leaf_size;
 double cluster_value = 0.5;
@@ -25,10 +27,43 @@ class frameTracker
 public:
 
     // std::vector<std::vector<pcl::PointXYZI>> compareVector;
-    pcl::PointCloud<pcl::PointXYZI> outCloud;
     lidarUtil util;
+    pcl::PointCloud<pcl::PointXYZI> outCloud;
+    pcl::PointCloud<pcl::PointXYZI> showMaxp;
+    pcl::PointCloud<pcl::PointXYZI> showMinp;
+    std::vector<float> area_vector;
 
-    void drawMarker(pcl::PointCloud<pcl::PointXYZI>& cloud , pcl::PointXYZI& centroid, int id) {
+
+
+
+    void extractArea(std::vector<pcl::PointCloud<pcl::PointXYZI>>& vec) {
+
+        for(int i = 0; i < vec.size(); i++ ) {
+            
+            Eigen::Vector4f Max;
+            Eigen::Vector4f Min;
+            Eigen::Vector4f center;
+            pcl::PointXYZI temp;
+            pcl::PointXYZI temp2;
+
+            pcl::getMinMax3D(vec[i], Min, Max);
+
+            temp.x = Max[0], temp.y = Max[1], temp.z = 0;
+            temp2.x = Min[0], temp2.y = Min[1], temp2.z = 0;
+            center[0] = Min[0], center[1] = Max[1], center[2] = 0;
+
+            //  compute obstacle Area
+            float length1 = pow((Max[0] - center[0]) + (Max[1] - center[1]), 2);
+            float length2 = pow((center[0] - Min[0]) + (center[1] - Min[1]), 2);
+
+            float Area = length1 * length2;
+
+            area_vector.push_back(Area);
+        }
+    }
+
+
+    void drawMarker(pcl::PointCloud<pcl::PointXYZI>& cloud , pcl::PointXYZI& centroid, double distance, int id) {
 
         Eigen::Vector4f center;
         Eigen::Vector4f min;
@@ -37,8 +72,20 @@ public:
         center << centroid.x, centroid.y, 0, 0;        
         pcl::getMinMax3D(cloud, min, max);
         // std::cout<<"min"<<min<<"Max:"<<max<<std::endl;
-        pub_vis.publish(util.mark_centroid(pcl_conversions::fromPCL(cloud.header), center, min, max, "velodyne", id, 0, 255, 0));
+        pub_vis.publish(util.mark_centroid(pcl_conversions::fromPCL(cloud.header), center, min, max, "velodyne", distance, id, 0, 255, 0));
         
+    }
+
+
+    void publishClusterInformation(pcl::PointXYZI& centroid_, float distance_) {
+
+        frame_tracking::pointInformation data;
+        frame_tracking::pointInformationarray msg;
+
+        data.x = centroid_.x, data.y = centroid_.y, data.distance = distance_;
+        msg.points.push_back(data);
+
+        pub_information.publish(msg);
     }
 
 
@@ -111,8 +158,8 @@ public:
 
         std::vector<float> intensityVector;
         intensityVector = util.selectNumber(TotalCloud, centroid_distance);
-
-
+        util.extractDistance();
+        extractArea(TotalCloud);
 
         pcl::PCLPointCloud2 cloud_clustered;
         pcl::toPCLPointCloud2(util.paintColor(TotalCloud, intensityVector), cloud_clustered);
@@ -139,29 +186,23 @@ public:
         pub3.publish(kalman_center); 
 
 
-        pcl::PointCloud<pcl::PointXYZI> minmax_test;
         for (int i =0 ; i <util.outKalman.size(); i++) {
             
-            pcl::PointXYZ minp;
-            pcl::PointXYZ maxp;
+            Eigen::Vector4f min;
+            Eigen::Vector4f max;
+            // pcl::PointXYZI test_point1;
+            // pcl::PointXYZI test_point2;
+            drawMarker(util.outMinMax.at(i), util.outKalman.at(i), util.distanceVector.at(i), i);
+            publishClusterInformation(util.outKalman.at(i), util.distanceVector.at(i));
 
-            drawMarker(util.outMinMax.at(i), util.outKalman.at(i), i);
-            // pcl::getMinMax3D(cloud, minp, maxp);
-            // minmax_test.push_back(minp)
-            // minmax_test.push_back(maxp)
         }
+
         util.outKalman.clear();
-        // pcl::PCLPointCloud2 test;
-        // pcl::toPCLPointCloud2(minmax_test, test);
-        // sensor_msgs::PointCloud2 test_minmax; 
-        // pcl_conversions::fromPCL(test, test_minmax);
-        // test_minmax.header.frame_id = "velodyne";
-        // pub_test.publish(center); 
-        // minmax_test.clear();
-        // util.outKalman.clear();
+        util.distanceVector.clear();
+        showMaxp.clear();
+        showMinp.clear();
 
     }
-
 };
 
 
@@ -175,7 +216,7 @@ int main(int argc, char** argv)
     nh.getParam("voxel_leaf_size_", leaf_size);
 
     frameTracker tracker;
-    ros::Subscriber sub = nh.subscribe("/Front_velo/velodyne_points",1, &frameTracker::Callback, &tracker);
+    ros::Subscriber sub = nh.subscribe("/Combined_points",1, &frameTracker::Callback, &tracker);
 
     pub = nh.advertise<sensor_msgs::PointCloud2>("tracking", 1);
 
@@ -185,8 +226,7 @@ int main(int argc, char** argv)
 
     pub_vis = nh.advertise<visualization_msgs::Marker> ("visualization_marker", 1);
 
-    // pub_test = nh.advertise<sensor_msgs::PointCloud2>("test", 1);
-
+    pub_information = nh.advertise<frame_tracking::pointInformationarray>("axis_distance_msg", 1);
 
     ros::spin();
 
