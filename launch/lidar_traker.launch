@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+    <node pkg="adas_calibration" type="adas_calibration_node" name="adas_calibration" />
+    <node pkg="frame_tracking" type="frame_tracking_node" name="example" />
+
+    <!-- Setup tracking Algorithm parameter -->
+    <param name="cluster_value_" type="double" value="0.6" />
+    <param name="centroid_distance_" type="double" value="1.6" />
+    <param name="voxel_leaf_size_" type="double" value="0.3" />
+    
+
+</launch>

@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: frame_tracking
+Description: Description of frame_tracking
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
