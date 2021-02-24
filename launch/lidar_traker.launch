@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
 
+    <node pkg="adas_calibration" type="adas_calibration_node" name="adas_calibration" />
     <node pkg="frame_tracking" type="frame_tracking_node" name="example" />
 
     <!-- Setup tracking Algorithm parameter -->

@@ -88,11 +88,11 @@ public:
 
 class lidarUtil
 {
+
 private:
     std::vector<pcl::PointXYZI> pre_value;
 
 public:
-
 
     std::vector<std::vector<pcl::PointXYZI>> compareVector;
     std::vector<std::vector<pcl::PointXYZI>> kalmanVector;
@@ -117,6 +117,7 @@ public:
         return outPoint;
     }
 
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr point_projection(const pcl::PointCloud<pcl::PointXYZI>::Ptr& point)
     {
 
@@ -136,7 +137,6 @@ public:
 
         return cloud_projected;    
     }
-
 
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr point_roi(const pcl::PointCloud<pcl::PointXYZI>::Ptr& point)
@@ -161,71 +161,113 @@ public:
         return out_cloud;
     }
 
-
-
-    // pcl::PointXYZI selectNumber(pcl::PointCloud<pcl::PointXYZI> cloud, int mode)
+    // visualization_msgs::Marker mark_centroid(std_msgs::Header header, Eigen::Vector4f centroid, Eigen::Vector4f min, Eigen::Vector4f max, std::string ns , double distance_,float area, int id, float r, float g, float b)
     // {
-    //     // pcl::PointCloud<pcl::PointXYZI>::Ptr tempPoint(new pcl::PointCloud<pcl::PointXYZI>);
-    //     pcl::PointXYZI outpoint;
-    //     Eigen::Vector4f centroid;
-    //     // tempPoint->push_back(cloud);
-    //     pcl::compute3DCentroid(cloud, centroid);
+    //     uint32_t shape = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    //     visualization_msgs::Marker marker;
+    //     marker.header.frame_id = "velodyne";
+    //     marker.header.stamp = ros::Time();
 
-    //     std::cout<<"center point:"<<centroid<<std::endl;
+    //     marker.ns = ns;
+    //     marker.id = id;
+    //     marker.type = shape;
+    //     marker.action = visualization_msgs::Marker::ADD;
+        
+    //     marker.pose.position.x = centroid[0];
+    //     marker.pose.position.y = centroid[1];
+    //     marker.pose.position.z = centroid[2];
+    //     marker.pose.orientation.x = 0.0;
+    //     marker.pose.orientation.y = 0.0;
+    //     marker.pose.orientation.z = 0.0;
+    //     marker.pose.orientation.w = 1.0;
 
-    //     outpoint.x = centroid[0], outpoint.y = centroid[1], outpoint.z = centroid[2], outpoint.intensity = 5;
-    //     pre_value.push_back(outpoint);
-    //     std::cout<<"pre_value:"<<pre_value.size()<<std::endl;
-    //     std::cout<<"pre_value:"<<pre_value.back()<<std::endl;
-    //     std::cout<<"pre_value:"<<pre_value.front()<<std::endl;
+    //     // std::string distance_text = "";
 
-    //     return outpoint;
+    //     marker.text = "Area";
+    //     marker.scale.x = (max[0]-min[0]);
+    //     marker.scale.y = (max[1]-min[1]);
+    //     marker.scale.z = 1.0;
+    //     // marker.scale.x = 1;
+    //     // marker.scale.y = 2;
+    //     // marker.scale.z = 1;
+        
+    //     // if (marker.scale.x ==0)
+    //     //     marker.scale.x=0.1;
 
+    //     // if (marker.scale.y ==0)
+    //     //     marker.scale.y=0.1;
+
+    //     // if (marker.scale.z ==0)
+    //     //     marker.scale.z=0.1;
+        
+    //     // marker.color.r = 0.0f;
+    //     // marker.color.g = 1.0f;
+    //     // marker.color.b = 0.0f;
+    //     marker.color.a = 1;
+
+    //     marker.lifetime = ros::Duration(0.2);
+    //     return marker;
     // }
 
-    visualization_msgs::Marker mark_centroid(std_msgs::Header header, Eigen::Vector4f centroid, Eigen::Vector4f min, Eigen::Vector4f max, std::string ns , double distance_, int id, float r, float g, float b)
+    visualization_msgs::MarkerArray visualFunction(std::vector<pcl::PointCloud<pcl::PointXYZI>> cloud , pcl::PointCloud<pcl::PointXYZI> center, std::vector<double> distance, std::vector<float> area) {
+
+        visualization_msgs::MarkerArray markerArr;
+
+        for(int i = 0; i< cloud.size(); i++) {
+
+            Eigen::Vector4f min;
+            Eigen::Vector4f max;
+            Eigen::Vector4f centroid;
+
+            pcl::getMinMax3D(cloud[i], min, max);
+            centroid<< center.at(i).x , center.at(i).y,0,0;
+
+            visualization_msgs::Marker marker;
+
+            marker.header.frame_id = "/velodyne";
+            marker.header.stamp = ros::Time::now();
+            marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+            marker.action = visualization_msgs::Marker::ADD;
+            marker.color.r = 0.0f;
+            marker.color.g = 1.0f;
+            marker.color.b = 0.0f;
+            marker.color.a = 1.0;
+            marker.id = i;
+            marker.scale.z = 1.0;
+            marker.pose.orientation.w = 1.0;
+            // marker.text = "Area";
+            marker.text = std::to_string(area.at(i));
+            marker.pose.position.x = centroid[0];
+            marker.pose.position.y = centroid[1];
+            marker.lifetime = ros::Duration(0.2);
+            markerArr.markers.push_back(marker);
+        }
+
+
+        return markerArr;
+    }
+
+    visualization_msgs::Marker mark_centroid(std_msgs::Header header, Eigen::Vector4f centroid, Eigen::Vector4f min, Eigen::Vector4f max, std::string ns , double distance_,float area, int id, float r, float g, float b)
     {
-        uint32_t shape = visualization_msgs::Marker::TEXT_VIEW_FACING;
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "velodyne";
-        marker.header.stamp = ros::Time();
 
-        marker.ns = ns;
-        marker.id = id;
-        marker.type = shape;
+        marker.header.frame_id = "/velodyne";
+        marker.header.stamp = ros::Time::now();
+        marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
         marker.action = visualization_msgs::Marker::ADD;
-        
-        marker.pose.position.x = centroid[0];
-        marker.pose.position.y = centroid[1];
-        marker.pose.position.z = centroid[2];
-        marker.pose.orientation.x = 0.0;
-        marker.pose.orientation.y = 0.0;
-        marker.pose.orientation.z = 0.0;
-        marker.pose.orientation.w = 1.0;
-
-        // std::string distance_text = "";
-
-        marker.text = "distance";
-        marker.scale.x = (max[0]-min[0]);
-        marker.scale.y = (max[1]-min[1]);
-        marker.scale.z = (max[2]-min[2]);
-        // marker.scale.x = 1;
-        // marker.scale.y = 2;
-        // marker.scale.z = 1;
-        
-        if (marker.scale.x ==0)
-            marker.scale.x=0.1;
-
-        if (marker.scale.y ==0)
-            marker.scale.y=0.1;
-
-        if (marker.scale.z ==0)
-            marker.scale.z=0.1;
-        
         marker.color.r = 0.0f;
         marker.color.g = 1.0f;
         marker.color.b = 0.0f;
-        marker.color.a = 0.5;
+        marker.color.a = 1.0;
+        
+        // marker.scale.x = 3.0;
+        // marker.scale.y = 3.0;
+        marker.scale.z = 1.0;
+        marker.pose.orientation.w = 1.0;
+        // marker.text = "Area";
+        marker.text = std::to_string(area);
+        marker.pose.position.x = centroid[0];
+        marker.pose.position.y = centroid[1];
 
         marker.lifetime = ros::Duration(0.2);
         return marker;
@@ -244,7 +286,6 @@ public:
         pcl::PointCloud<pcl::PointXYZI> out_cloud;
 
         std::vector<float> intensityVector;
-
 
         for(int cl = 0; cl < vec.size(); cl++)
         {
@@ -296,7 +337,6 @@ public:
                     }
 
                 }
-                // intensityVector.push_back(intensity);
             }
 
             out_cloud.push_back(outpoint);
@@ -307,13 +347,11 @@ public:
             intensityVector.push_back(intensity);
 
         }
-        // setIntensity(vec, intensityVector);
-        compareVector.clear();
-        // kalmanVector.clear();
-        compareVector.push_back(tempVector);
-        // kalmanVector.push_back(tempKalman);
-        return intensityVector;
 
+        compareVector.clear();
+        compareVector.push_back(tempVector);
+
+        return intensityVector;
     }
 
     pcl::PointCloud<pcl::PointXYZI> paintColor(std::vector<pcl::PointCloud<pcl::PointXYZI>>& vec, std::vector<float> intensity) {
@@ -337,7 +375,7 @@ public:
 
     float extractDistance() {
 
-        for( auto point : outKalman) {
+        for( auto point : outCloud) {
 
             double distance = pow(point.x, 2) + pow(point.y, 2) + pow(point.z, 2);
             distance = sqrt(distance);

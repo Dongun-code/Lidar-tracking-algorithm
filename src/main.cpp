@@ -4,6 +4,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -34,8 +35,6 @@ public:
     std::vector<float> area_vector;
 
 
-
-
     void extractArea(std::vector<pcl::PointCloud<pcl::PointXYZI>>& vec) {
 
         for(int i = 0; i < vec.size(); i++ ) {
@@ -63,7 +62,7 @@ public:
     }
 
 
-    void drawMarker(pcl::PointCloud<pcl::PointXYZI>& cloud , pcl::PointXYZI& centroid, double distance, int id) {
+    void drawMarker(pcl::PointCloud<pcl::PointXYZI>& cloud , pcl::PointXYZI& centroid, double distance, float area, int id) {
 
         Eigen::Vector4f center;
         Eigen::Vector4f min;
@@ -72,7 +71,7 @@ public:
         center << centroid.x, centroid.y, 0, 0;        
         pcl::getMinMax3D(cloud, min, max);
         // std::cout<<"min"<<min<<"Max:"<<max<<std::endl;
-        pub_vis.publish(util.mark_centroid(pcl_conversions::fromPCL(cloud.header), center, min, max, "velodyne", distance, id, 0, 255, 0));
+        pub_vis.publish(util.mark_centroid(pcl_conversions::fromPCL(cloud.header), center, min, max, "velodyne", distance, id, area, 0, 255, 0));
         
     }
 
@@ -89,21 +88,19 @@ public:
     }
 
 
-
     void Callback(const sensor_msgs::PointCloud2& msg)
     {
-
         //set variable and convert ros msg
-
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new  pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZI>);
         pcl::PointCloud<pcl::PointXYZI>::Ptr projection_cloud(new pcl::PointCloud<pcl::PointXYZI>);
+        visualization_msgs::MarkerArray arr;
+        
         pcl::fromROSMsg(msg, *cloud);
 
 
         //Point roi & Point projection
-
         output_cloud = util.point_roi(cloud);
         projection_cloud = util.point_projection(output_cloud);
 
@@ -133,7 +130,9 @@ public:
         ec.extract(cluster_indices);
 
         std::vector<pcl::PointCloud<pcl::PointXYZI>> TotalCloud; 
+        std::vector<float> intensityVector;
         pcl::PointCloud<pcl::PointXYZI> final_cloud; 
+        
 
         for( std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
         {
@@ -156,7 +155,7 @@ public:
 
         }
 
-        std::vector<float> intensityVector;
+
         intensityVector = util.selectNumber(TotalCloud, centroid_distance);
         util.extractDistance();
         extractArea(TotalCloud);
@@ -167,7 +166,6 @@ public:
         pcl_conversions::fromPCL(cloud_clustered, output_clustered);
         output_clustered.header.frame_id = "velodyne";
         pub.publish(output_clustered);
-        final_cloud.clear();
 
 
         pcl::PCLPointCloud2 center_cloud;
@@ -176,7 +174,7 @@ public:
         pcl_conversions::fromPCL(center_cloud, center);
         center.header.frame_id = "velodyne";
         pub2.publish(center); 
-        util.outCloud.clear();
+
 
         pcl::PCLPointCloud2 kalman_predict;
         pcl::toPCLPointCloud2(util.outKalman, kalman_predict);
@@ -186,21 +184,17 @@ public:
         pub3.publish(kalman_center); 
 
 
-        for (int i =0 ; i <util.outKalman.size(); i++) {
-            
-            Eigen::Vector4f min;
-            Eigen::Vector4f max;
-            // pcl::PointXYZI test_point1;
-            // pcl::PointXYZI test_point2;
-            drawMarker(util.outMinMax.at(i), util.outKalman.at(i), util.distanceVector.at(i), i);
-            publishClusterInformation(util.outKalman.at(i), util.distanceVector.at(i));
+        arr = util.visualFunction(TotalCloud , util.outCloud, util.distanceVector, area_vector);
+        pub_vis.publish(arr);
 
-        }
-
+        //  variable clear
+        util.outCloud.clear();
         util.outKalman.clear();
         util.distanceVector.clear();
         showMaxp.clear();
         showMinp.clear();
+        area_vector.clear();
+        final_cloud.clear();
 
     }
 };
@@ -224,7 +218,7 @@ int main(int argc, char** argv)
 
     pub3 = nh.advertise<sensor_msgs::PointCloud2>("Kalman_predict", 1);
 
-    pub_vis = nh.advertise<visualization_msgs::Marker> ("visualization_marker", 1);
+    pub_vis = nh.advertise<visualization_msgs::MarkerArray>("Area_maker_array", 1);
 
     pub_information = nh.advertise<frame_tracking::pointInformationarray>("axis_distance_msg", 1);
 
