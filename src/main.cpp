@@ -14,7 +14,7 @@
 #include "frame_tracking/pointInformationarray.h"
 // #include "kalman_hand.hpp"
 
-ros::Publisher pub, pub2, pub3, pub_vis, pub_information;
+ros::Publisher pub, pub2, pub3, pub_vis, pub_information, pub_axis_test;
 
 // double cluster_value, centroid_distance, leaf_size;
 double cluster_value = 0.5;
@@ -52,8 +52,11 @@ public:
             center[0] = Min[0], center[1] = Max[1], center[2] = 0;
 
             //  compute obstacle Area
-            float length1 = pow((Max[0] - center[0]) + (Max[1] - center[1]), 2);
-            float length2 = pow((center[0] - Min[0]) + (center[1] - Min[1]), 2);
+            float pre_length1 = pow((Max[0] - center[0]) + (Max[1] - center[1]), 2);
+            float pre_length2 = pow((center[0] - Min[0]) + (center[1] - Min[1]), 2);
+
+            float length1 = std::sqrt(pre_length1);
+            float length2 = std::sqrt(pre_length2);
 
             float Area = length1 * length2;
 
@@ -62,18 +65,18 @@ public:
     }
 
 
-    void drawMarker(pcl::PointCloud<pcl::PointXYZI>& cloud , pcl::PointXYZI& centroid, double distance, float area, int id) {
+    // void drawMarker(pcl::PointCloud<pcl::PointXYZI>& cloud , pcl::PointXYZI& centroid, double distance, float area, int id) {
 
-        Eigen::Vector4f center;
-        Eigen::Vector4f min;
-        Eigen::Vector4f max;
+    //     Eigen::Vector4f center;
+    //     Eigen::Vector4f min;
+    //     Eigen::Vector4f max;
 
-        center << centroid.x, centroid.y, 0, 0;        
-        pcl::getMinMax3D(cloud, min, max);
-        // std::cout<<"min"<<min<<"Max:"<<max<<std::endl;
-        pub_vis.publish(util.mark_centroid(pcl_conversions::fromPCL(cloud.header), center, min, max, "velodyne", distance, id, area, 0, 255, 0));
+    //     center << centroid.x, centroid.y, 0, 0;        
+    //     pcl::getMinMax3D(cloud, min, max);
+    //     // std::cout<<"min"<<min<<"Max:"<<max<<std::endl;
+    //     pub_vis.publish(util.mark_centroid(pcl_conversions::fromPCL(cloud.header), center, min, max, "velodyne", distance, id, area, 0, 255, 0));
         
-    }
+    // }
 
 
     void publishClusterInformation(pcl::PointXYZI& centroid_, float distance_) {
@@ -183,8 +186,11 @@ public:
         kalman_center.header.frame_id = "velodyne";
         pub3.publish(kalman_center); 
 
+        std::pair<std::vector<pcl::PointCloud<pcl::PointXYZI>>, std::vector<double>> point_distance_data;
 
-        arr = util.visualFunction(TotalCloud , util.outCloud, util.distanceVector, area_vector);
+        point_distance_data =  util.exceptPoint(TotalCloud, util.distanceVector);
+        arr = util.visualFunction(point_distance_data.first, point_distance_data.second, area_vector);
+        // arr = util.visualFunction(TotalCloud , util.outCloud, util.distanceVector, area_vector);
         pub_vis.publish(arr);
 
         //  variable clear

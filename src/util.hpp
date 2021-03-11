@@ -30,6 +30,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/video.hpp>
+#include <utility>
 // #include "kalman_hand.hpp"
 
 class KalmanFilter_hand {
@@ -209,7 +210,43 @@ public:
     //     return marker;
     // }
 
-    visualization_msgs::MarkerArray visualFunction(std::vector<pcl::PointCloud<pcl::PointXYZI>> cloud , pcl::PointCloud<pcl::PointXYZI> center, std::vector<double> distance, std::vector<float> area) {
+    // visualization_msgs::MarkerArray visualFunction(std::vector<pcl::PointCloud<pcl::PointXYZI>> cloud , pcl::PointCloud<pcl::PointXYZI> center, std::vector<double> distance, std::vector<float> area) {
+
+    //     visualization_msgs::MarkerArray markerArr;
+
+    //     for(int i = 0; i< cloud.size(); i++) {
+
+    //         Eigen::Vector4f min;
+    //         Eigen::Vector4f max;
+    //         Eigen::Vector4f centroid;
+
+    //         pcl::getMinMax3D(cloud[i], min, max);
+    //         centroid<< center.at(i).x , center.at(i).y,0,0;
+
+    //         visualization_msgs::Marker marker;
+
+    //         marker.header.frame_id = "/velodyne";
+    //         marker.header.stamp = ros::Time::now();
+    //         marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    //         marker.action = visualization_msgs::Marker::ADD;
+    //         marker.color.r = 0.0f;
+    //         marker.color.g = 1.0f;
+    //         marker.color.b = 0.0f;
+    //         marker.color.a = 1.0;
+    //         marker.id = i;
+    //         marker.scale.z = 1.0;
+    //         marker.pose.orientation.w = 1.0;
+    //         // marker.text = "Area";
+    //         marker.text = std::to_string(area.at(i));
+    //         marker.pose.position.x = centroid[0];
+    //         marker.pose.position.y = centroid[1];
+    //         marker.lifetime = ros::Duration(0.2);
+    //         markerArr.markers.push_back(marker);
+    //     }
+    //         return markerArr;
+    // }
+
+    visualization_msgs::MarkerArray visualFunction(std::vector<pcl::PointCloud<pcl::PointXYZI>> cloud , std::vector<double> distance, std::vector<float> area) {
 
         visualization_msgs::MarkerArray markerArr;
 
@@ -220,9 +257,11 @@ public:
             Eigen::Vector4f centroid;
 
             pcl::getMinMax3D(cloud[i], min, max);
-            centroid<< center.at(i).x , center.at(i).y,0,0;
+            pcl::compute3DCentroid(cloud[i], centroid);
 
             visualization_msgs::Marker marker;
+
+            std::cout<<"test : "<<cloud[i]<<distance[i]<<std::endl;
 
             marker.header.frame_id = "/velodyne";
             marker.header.stamp = ros::Time::now();
@@ -235,8 +274,9 @@ public:
             marker.id = i;
             marker.scale.z = 1.0;
             marker.pose.orientation.w = 1.0;
-            // marker.text = "Area";
-            marker.text = std::to_string(area.at(i));
+            std::string outname = "Area : ";
+            std::string num = std::to_string(area.at(i));
+            marker.text = outname+num;
             marker.pose.position.x = centroid[0];
             marker.pose.position.y = centroid[1];
             marker.lifetime = ros::Duration(0.2);
@@ -246,6 +286,9 @@ public:
 
         return markerArr;
     }
+
+
+
 
     visualization_msgs::Marker mark_centroid(std_msgs::Header header, Eigen::Vector4f centroid, Eigen::Vector4f min, Eigen::Vector4f max, std::string ns , double distance_,float area, int id, float r, float g, float b)
     {
@@ -290,14 +333,13 @@ public:
         for(int cl = 0; cl < vec.size(); cl++)
         {
 
-
             pcl::PointXYZI outpoint;
             pcl::PointXYZI new_outpoint;
             pcl::PointXYZI kalmanPoint;
             pcl::PointXYZI total_point;
             Eigen::Vector4f centroid;
             float tempSave = 0;
-            float intensity = std::rand() % 15;
+            float intensity = std::rand() % 30;
 
             pcl::compute3DCentroid(vec[cl], centroid);
             
@@ -382,6 +424,28 @@ public:
 
             distanceVector.push_back(distance);
         }
+    }
+
+    std::pair<std::vector<pcl::PointCloud<pcl::PointXYZI>>, std::vector<double>> exceptPoint(std::vector<pcl::PointCloud<pcl::PointXYZI>> cloud , std::vector<double> distance) {
+
+        std::vector<pcl::PointCloud<pcl::PointXYZI>> outcloud;
+        std::vector<double> outdistance;
+
+        for(int i = 0; i < cloud.size(); i++) {
+            
+            Eigen::Vector4f centroid;
+            pcl::compute3DCentroid(cloud[i], centroid);
+
+
+            if(!((centroid[0] < 0.3) && (centroid[0] > -4.7) && (centroid[1] < 0.3) && (centroid[1] > - 3.2))) {
+
+                outcloud.push_back(cloud[i]);
+                outdistance.push_back(distance[i]);
+            }
+
+        }
+
+        return std::make_pair(outcloud, outdistance);
     }
 
 };

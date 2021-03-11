@@ -3,6 +3,6 @@ prefix=/home/milab/catkin_ws/src/frame_tracking/build/devel
 Name: frame_tracking
 Description: Description of frame_tracking
 Version: 0.0.0
-Cflags: 
+Cflags: -I/home/milab/catkin_ws/src/frame_tracking/build/devel/include
 Libs: -L${prefix}/lib 
-Requires: 
+Requires: message_runtime
