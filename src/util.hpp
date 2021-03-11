@@ -261,6 +261,8 @@ public:
 
             visualization_msgs::Marker marker;
 
+            std::cout<<"test : "<<cloud[i]<<distance[i]<<std::endl;
+
             marker.header.frame_id = "/velodyne";
             marker.header.stamp = ros::Time::now();
             marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
@@ -272,14 +274,9 @@ public:
             marker.id = i;
             marker.scale.z = 1.0;
             marker.pose.orientation.w = 1.0;
-            // marker.text = "Area";
-            // std::string st = "Area : ";
-            // std::string st2 = " Distance : "
-            // std::string area = std::to_string(area.at(i));
-            // std::string distance = std::to_string(distance.at(i));
-            // std::string total = st+area+st2+distance;
-            // marker.text = std::to_string(area.at(i));
-            marker.text = std::to_string(area.at(i));
+            std::string outname = "Area : ";
+            std::string num = std::to_string(area.at(i));
+            marker.text = outname+num;
             marker.pose.position.x = centroid[0];
             marker.pose.position.y = centroid[1];
             marker.lifetime = ros::Duration(0.2);
