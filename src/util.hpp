@@ -46,7 +46,12 @@ public:
 
 
     pcl::PointXYZI predict(const pcl::PointXYZI& pre_state, const pcl::PointXYZI& cur_state) {
-
+       
+        // opencv 에서 제공하는 칼만필터 기능을 사용하여 적용
+        // 칼만필터에서 사용되는 행렬값 튜닝 필요
+        // 여기에있는 값은 그대로 사용 못한다고 생각하고 다시 파라미터 조정필요
+        // opencv에서 제공하는 KalmanFilter기능 사용법 찾아서 사용하면 됨
+        // ex) kalman filter 공추적 예시 찾아보면 은근 많음
         cv::KalmanFilter KFT( 4,2,0);
         pcl::PointXYZI outpoint;
         // cv::KalmanFilter KF( 4,2,0);
@@ -247,7 +252,9 @@ public:
     // }
 
     visualization_msgs::MarkerArray visualFunction(std::vector<pcl::PointCloud<pcl::PointXYZI>> cloud , std::vector<double> distance, std::vector<float> area) {
-
+        // marker 도형으로 rviz에 그려주는 기능
+        // 이거는 딱히 사용하지 않아도됨
+        // 그냥 시각화해서 볼려고 만든 것
         visualization_msgs::MarkerArray markerArr;
 
         for(int i = 0; i< cloud.size(); i++) {
@@ -292,6 +299,9 @@ public:
 
     visualization_msgs::Marker mark_centroid(std_msgs::Header header, Eigen::Vector4f centroid, Eigen::Vector4f min, Eigen::Vector4f max, std::string ns , double distance_,float area, int id, float r, float g, float b)
     {
+        // marker 도형으로 rviz에 그려주는 기능
+        // 이거는 딱히 사용하지 않아도됨
+        // 그냥 시각화해서 볼려고 만든 것
         visualization_msgs::Marker marker;
 
         marker.header.frame_id = "/velodyne";
@@ -341,6 +351,7 @@ public:
             float tempSave = 0;
             float intensity = std::rand() % 30;
 
+            // Centroid점 좌표 추출하는 기능
             pcl::compute3DCentroid(vec[cl], centroid);
             
 
@@ -355,6 +366,7 @@ public:
                 for(int i = 0; i < pt->size(); i++)
                 {
 
+                    // 여기는 서로 다른 두 centroid좌표간의 거리값을 비교하여 일정 값 이하이면 같은 클러스터로 판단
                     pcl::PointXYZI tempP;
                     tempP.x = pt->at(i).x, tempP.y = pt->at(i).y, tempP.z = pt->at(i).z;
                     double add_x = tempP.x - outpoint.x;
@@ -363,6 +375,9 @@ public:
 
                     std::cout<<"distance:"<<distance<<std::endl;
 
+                    // Kalman Filter 적용
+                    // kalman filter는 이전프레임과 현재 프레임의 좌표를 알아야하기 때문에 위의 과정을 적용
+                    // predict를 통해 보정된 좌표를 출력 
                     if(distance <= thresold)
                     {
                         new_outpoint = KF.predict(tempP, outpoint);
@@ -393,6 +408,8 @@ public:
         compareVector.clear();
         compareVector.push_back(tempVector);
 
+        // 클러스터 구별을 위해 사용할 intensity 백터 리턴
+        // 같은 intensity 값은 이전 프레임과 현재프레임이 같은 클러스터인것을 의미함
         return intensityVector;
     }
 
